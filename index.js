@@ -2,12 +2,14 @@
 
 const colors = require('colors');
 const levels = {
+  meme: 0.420,
   trace: 10,
   debug: 20,
   info: 30,
   warn: 40,
   error: 50,
-  fatal: 60
+  fatal: 60,
+  wtf: 70
 };
 
 class Wog {
@@ -17,7 +19,7 @@ class Wog {
     }
 
     config.logger = config.logger || console;
-    config.level = config.level || 'trace';
+    config.level = config.level || 'meme';
     config.colors = !(config.colors === false);
     config.enable = !(config.enable === false);
 
@@ -62,6 +64,20 @@ class Wog {
           case levels.trace:
             color = 'green';
             break;
+          case levels.wtf:
+            this.logger.log(
+              '[' + colors.rainbow(this.getLevelString(level)) + ']:',
+              ...msg
+            );
+            return;
+            break;
+          case levels.meme:
+            this.logger.log(
+              '[' + colors.zalgo(this.getLevelString(level)) + ']:',
+              ...msg
+            );
+            return;
+            break;
           default:
             break;
         }
@@ -93,6 +109,12 @@ class Wog {
   trace(...msg) {
     this.log(levels.trace, ...msg);
   }
+  wtf(...msg) {
+    this.log(levels.wtf, ...msg);
+  }
+  meme(...msg) {
+    this.log(levels.meme, ...msg);
+  }
 
   getLevelString(level) {
     switch (level) {
@@ -108,6 +130,10 @@ class Wog {
         return 'FATAL';
       case levels.trace:
         return 'TRACE';
+      case levels.wtf:
+        return 'DAFUC';
+      case levels.meme:
+        return 'MEME';
       default:
         break;
     }

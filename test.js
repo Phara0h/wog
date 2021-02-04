@@ -23,4 +23,6 @@ function test() {
   wog.fatal('f');
   wog.debug('Why?');
   wog.trace('there you are', {meme:'city'});
+  wog.wtf('i give up');
+  wog.meme('I summon thee');
 }
