@@ -13,13 +13,14 @@ const levels = {
 class Wog {
   constructor(config) {
     if(!config) {
-      config = {
-        logger: console,
-        level: 'trace',
-        colors: true,
-        enable: true
-      };
+      config = {};
     }
+
+    config.logger = config.logger || console;
+    config.level = config.level || 'trace';
+    config.colors = !(config.colors === false);
+    config.enable = !(config.enable === false);
+
     this.logger = config.logger;
     this.level = levels[config.level];
     this.config = config;
@@ -27,6 +28,14 @@ class Wog {
 
   wog(level, ...msg) {
     this.log(level, ...msg);
+  }
+
+  setLevel(level) {
+    this.level = levels[level];
+  }
+
+  setLogger(logger) {
+    this.logger = logger;
   }
 
   log(level, ...msg) {
