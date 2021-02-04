@@ -1,6 +1,6 @@
 'use strict';
 
-const colors = require('colors');
+const colors = require('./src/colors.js');
 const levels = {
   meme: 0.420,
   trace: 10,
@@ -66,14 +66,14 @@ class Wog {
             break;
           case levels.wtf:
             this.logger.log(
-              '[' + colors.rainbow(this.getLevelString(level)) + ']:',
+              '[' + colors('rainbow', this.getLevelString(level)) + ']:',
               ...msg
             );
             return;
             break;
           case levels.meme:
             this.logger.log(
-              '[' + colors.zalgo(this.getLevelString(level)) + ']:',
+              '[' + colors('zalgo', this.getLevelString(level)) + ']:',
               ...msg
             );
             return;
@@ -82,7 +82,7 @@ class Wog {
             break;
         }
         this.logger.log(
-          '[' + colors[color].bold(this.getLevelString(level)) + ']:',
+          '[' + colors(color,this.getLevelString(level)) + ']:',
           ...msg
         );
       } else if (this.config.enable) {

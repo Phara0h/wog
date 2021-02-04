@@ -1,5 +1,5 @@
 # wog
-Just a wittle wogger
+Just a wittle wogger with no dependencies
 
 ###install
 
