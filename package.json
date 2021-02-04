@@ -1,0 +1,29 @@
+{
+  "name": "wog",
+  "version": "1.1.0",
+  "description": "Just a wittle wogger with no depends",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Phara0h/wog.git"
+  },
+  "keywords": [
+    "logger",
+    "tiny",
+    "micro",
+    "wittle",
+    "little"
+  ],
+  "author": "Phara0h",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Phara0h/wog/issues"
+  },
+  "homepage": "https://github.com/Phara0h/wog#readme",
+  "dependencies": {
+    "colors": "^1.4.0"
+  }
+}
