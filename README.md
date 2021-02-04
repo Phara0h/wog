@@ -1,2 +1,8 @@
 # wog
-Just a wittle wogger with no depends
+Just a wittle wogger
+
+###install
+
+```bash
+npm install wog
+```
