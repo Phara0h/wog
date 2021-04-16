@@ -20,8 +20,9 @@ class Wog {
 
     config.logger = config.logger || console;
     config.level = config.level || 'meme';
-    config.colors = !(config.colors === false);
-    config.enable = !(config.enable === false);
+    config.colors = this.isSetDefault(this.stringToBool(config.colors),true);
+    config.enable = this.isSetDefault(this.stringToBool(config.enable), true);
+    config.jsonoutput = this.isSetDefault(this.stringToBool(config.jsonoutput), false);
 
     this.logger = config.logger;
     this.level = levels[config.level];
@@ -42,7 +43,7 @@ class Wog {
 
   log(level, ...msg) {
     if (level >= this.level) {
-      if (this.config.enable && this.config.colors) {
+      if (this.config.enable && this.config.colors && !this.config.jsonoutput) {
         var color = 'magenta';
 
         switch (level) {
@@ -86,7 +87,12 @@ class Wog {
           ...msg
         );
       } else if (this.config.enable) {
-        this.logger.log('[' + this.getLevelString(level) + ']:', ...msg);
+        if(this.config.jsonoutput) {
+          this.logger.log(`{"level": "${this.getLevelString(level)}","msg": ${JSON.stringify(msg)}}`);
+        } 
+        else {
+          this.logger.log('[' + this.getLevelString(level) + ']:', ...msg);
+        }
       }
     }
   }
@@ -137,6 +143,24 @@ class Wog {
       default:
         break;
     }
+  }
+  stringToBool(bool) {
+    if (typeof bool == 'boolean') {
+      return bool;
+    }
+    if (bool == 'true') {
+      return true;
+    }
+    if (bool == 'false') {
+      return false;
+    }
+    return null;
+  }
+  isSetDefault(v, d) {
+    if (typeof v == 'number') {
+      return !isNaN(v) ? v : d;
+    }
+    return v !== null && v !== undefined ? v : d;
   }
 }
 

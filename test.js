@@ -11,10 +11,18 @@ console.log('\ndisabled:')
 wog.config.enable = false;
 test();
 
+console.log('\json:')
+wog.config.enable = true;
+wog.config.jsonoutput = true;
+
+test();
+
 console.log('\nlevel error:')
 wog.config.enable = true;
 wog.setLevel('error');
 test();
+
+
 
 function test() {
   wog.info('Its ight');

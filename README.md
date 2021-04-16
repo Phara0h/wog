@@ -16,6 +16,7 @@ const wog = require('wog')({
     colors: true, 
     level: 'meme',
     logger: console,
+    jsonoutput: false
 });
 
 ```
