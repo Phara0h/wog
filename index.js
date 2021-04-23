@@ -1,8 +1,9 @@
-'use strict';
+const _loadNs = process.hrtime.bigint();
+const _loadMs = BigInt(new Date().getTime()) * 1000n * 1000n;
 
 const colors = require('./src/colors.js');
 const levels = {
-  meme: 0.420,
+  meme: 0.42,
   trace: 10,
   debug: 20,
   info: 30,
@@ -14,19 +15,46 @@ const levels = {
 
 class Wog {
   constructor(config) {
-    if(!config) {
+    if (!config) {
       config = {};
     }
+    this.config = {};
+    this.config.level = config.level || 'meme';
+    this.config.colors = this.isSetDefault(this.stringToBool(config.colors), true);
+    this.config.enable = this.isSetDefault(this.stringToBool(config.enable), true);
+    this.config.jsonoutput =  this.isSetDefault(this.stringToBool(config.jsonoutput), false);
+    this.config.addTimestamp = this.isSetDefault(this.stringToBool(config.addTimestamp), true);
+    this._appendFields = '';
+    if(config.appendFields) {
+      if(this.config.jsonoutput ) {
+        try {
+          this._appendFields = JSON.stringify(config.appendFields)
+          this._appendFields = this._appendFields.substring(1, this._appendFields.length-1);
+          //this._appendFields += ','
+        } catch (error) {
+          this._appendFields = ''
+        }
+      } else {
+       this._appendFields = '[ '
+        var keys = Object.keys(config.appendFields);
+        for (let i = 0; i < keys.length; i++) {
+          const field = keys[i];
+          this._appendFields += `${config.appendFields[field]}` + ((i+1) < keys.length ? ' | ' :'' )
+        }
+        this._appendFields += ' ]'
+      }
+    }
 
-    config.logger = config.logger || console;
-    config.level = config.level || 'meme';
-    config.colors = this.isSetDefault(this.stringToBool(config.colors),true);
-    config.enable = this.isSetDefault(this.stringToBool(config.enable), true);
-    config.jsonoutput = this.isSetDefault(this.stringToBool(config.jsonoutput), false);
+    this._logger = config.logger || console ;
+    this.level = levels[ this.config.level];
+    this.serializers = config.serializers || {};
+    this.serializersKeys = Object.keys(this.serializers);
+    
+  }
 
-    this.logger = config.logger;
-    this.level = levels[config.level];
-    this.config = config;
+  // hack for fastify support
+  child() {
+    return this;
   }
 
   wog(level, ...msg) {
@@ -38,11 +66,46 @@ class Wog {
   }
 
   setLogger(logger) {
-    this.logger = logger;
+    this._logger = logger;
+  }
+  
+  _serialize(m) {
+  
+    if (m.stack && m.message) {
+      return `"message": "${m.message}","stack": "${m.stack}"`
+    }
+    if(this.serializersKeys.length) {
+      var t = {};
+      for (let i = 0; i < this.serializersKeys.length; i++) {
+        if (m[this.serializersKeys[i]]) {
+          // if(this.config.jsonFlaten) {
+            
+          // }
+          t = Object.assign(t, this.serializers[this.serializersKeys[i]](m[this.serializersKeys[i]]));
+        }
+      }
+      return (JSON.stringify(t)).slice(1,-1);
+  
+    }
+
+    return typeof m == 'string' ? `"message":"${m}"`:JSON.stringify(m);
+  }
+  _getTS(){
+    if(!this.config.addTimestamp) {
+      return '';
+    }
+    if(!this.config.jsonoutput) {
+      return `[${(_loadMs + (process.hrtime.bigint() - _loadNs)).toString()}]`
+    }
+    return `"tsNs":"${(_loadMs + (process.hrtime.bigint() - _loadNs)).toString()}",`;
   }
 
   log(level, ...msg) {
+    //console.log(msg);
     if (level >= this.level) {
+      if (this.config.jsonoutput && msg[0]) {
+        msg = this._serialize({...msg});
+      }
       if (this.config.enable && this.config.colors && !this.config.jsonoutput) {
         var color = 'magenta';
 
@@ -66,33 +129,23 @@ class Wog {
             color = 'green';
             break;
           case levels.wtf:
-            this.logger.log(
-              '[' + colors('rainbow', this.getLevelString(level)) + ']:',
-              ...msg
-            );
+            this._logger.log(this._getTS()+'[' + colors('rainbow', this.getLevelString(level)) + ']:',this._appendFields, ...msg);
             return;
             break;
           case levels.meme:
-            this.logger.log(
-              '[' + colors('zalgo', this.getLevelString(level)) + ']:',
-              ...msg
-            );
+            this._logger.log(this._getTS()+'[' + colors('zalgo', this.getLevelString(level)) + ']:',this._appendFields, ...msg);
             return;
             break;
           default:
             break;
         }
-        this.logger.log(
-          '[' + colors(color,this.getLevelString(level)) + ']:',
-          ...msg
-        );
+        this._logger.log(this._getTS()+'[' + colors(color, this.getLevelString(level)) + ']:',this._appendFields, ...msg);
       } else if (this.config.enable) {
-        if(this.config.jsonoutput) {
-          this.logger.log(`{"level": "${this.getLevelString(level)}","msg": ${JSON.stringify(msg)}}`);
-        } 
-        else {
-          this.logger.log('[' + this.getLevelString(level) + ']:', ...msg);
-        }
+          if (this.config.jsonoutput) {
+            this._logger.log(`{${this._getTS()}"level": "${this.getLevelString(level)}",${this._appendFields}, ${msg}}`);
+          } else {
+            this._logger.log(this._getTS()+'[' + this.getLevelString(level) + ']:',this._appendFields, ...msg);
+          }
       }
     }
   }
@@ -164,12 +217,12 @@ class Wog {
   }
 }
 
-var wog;
+var __wog;
 
-module.exports = function(config) {
-  if (!wog) {
-    wog = new Wog(config);
+module.exports = function (config) {
+  if (!__wog) {
+    __wog = new Wog(config);
   }
 
-  return wog;
+  return __wog;
 };
