@@ -72,11 +72,12 @@ class Wog {
   _serialize(m) {
   
     if (m.stack && m.message) {
-      return `"message": "${m.message}","stack": "${m.stack}"`
+     // return `"message": "${m.message}","stack": ${JSON.stringify(m.stack)}`
+      return JSON.stringify({wog_type:m.name,message:m.message,stack:m.stack,traceId:m.traceId}).slice(1,-1)
     }
 
     if(typeof m == 'string') {
-      return `"message":"${m}"`;
+      return `"wog_type":"string_message","message":"${m}"`;
     }
 
     if(this.serializersKeys.length) {
