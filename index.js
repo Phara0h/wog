@@ -74,6 +74,11 @@ class Wog {
     if (m.stack && m.message) {
       return `"message": "${m.message}","stack": "${m.stack}"`
     }
+
+    if(typeof m == 'string') {
+      return `"message":"${m}"`;
+    }
+
     if(this.serializersKeys.length) {
       var t = {};
       for (let i = 0; i < this.serializersKeys.length; i++) {
@@ -88,7 +93,7 @@ class Wog {
   
     }
 
-    return typeof m == 'string' ? `"message":"${m}"`:JSON.stringify(m);
+    return JSON.stringify(m);
   }
   _getTS(){
     if(!this.config.addTimestamp) {
@@ -104,7 +109,7 @@ class Wog {
     //console.log(msg);
     if (level >= this.level) {
       if (this.config.jsonoutput && msg[0]) {
-        msg = this._serialize({...msg});
+        msg = this._serialize(...msg);
       }
       if (this.config.enable && this.config.colors && !this.config.jsonoutput) {
         var color = 'magenta';
