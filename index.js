@@ -82,19 +82,25 @@ class Wog {
 
     if(this.serializersKeys.length) {
       var t = {};
+      var found = false;
       for (let i = 0; i < this.serializersKeys.length; i++) {
         if (m[this.serializersKeys[i]]) {
           // if(this.config.jsonFlaten) {
             
           // }
           t = Object.assign(t, this.serializers[this.serializersKeys[i]](m[this.serializersKeys[i]]));
+          found = true;
         }
       }
-      return (JSON.stringify(t)).slice(1,-1);
+      if(found) {
+        return (JSON.stringify(t)).slice(1,-1);
   
+      }
+      
     }
 
-    return JSON.stringify(m);
+    return (JSON.stringify(m)).slice(1,-1);
+  
   }
   _getTS(){
     if(!this.config.addTimestamp) {
