@@ -70,13 +70,20 @@ class Wog {
   }
   
   _serialize(m) {
-  
+   // console.log(this.config.jsonoutput)
     if (m.stack && m.message) {
+
      // return `"message": "${m.message}","stack": ${JSON.stringify(m.stack)}`
+      if(!this.config.jsonoutput) { 
+        return [m]
+      }
       return JSON.stringify({wog_type:m.name,message:m.message,stack:m.stack,traceId:m.traceId}).slice(1,-1)
     }
 
-    if(typeof m == 'string') {
+    if( typeof m == 'string') {
+      if(!this.config.jsonoutput) {
+        return [m];
+      }
       return `"wog_type":"string_message","message":"${m}"`;
     }
 
@@ -92,11 +99,20 @@ class Wog {
           found = true;
         }
       }
+
       if(found) {
-        return (JSON.stringify(t)).slice(1,-1);
-  
+        if(!Object.keys(t).length) {
+          return null
+        }
+        if(this.config.jsonoutput) {
+          return (JSON.stringify(t)).slice(1,-1);
+        }
+        return [t];
       }
       
+    }
+    if(!this.config.jsonoutput) { 
+      return [m]
     }
 
     return (JSON.stringify(m)).slice(1,-1);
@@ -113,10 +129,14 @@ class Wog {
   }
 
   log(level, ...msg) {
-    //console.log(msg);
+  //console.log(this);
     if (level >= this.level) {
-      if (this.config.jsonoutput && msg[0]) {
+      if (msg[0]) {
+    //    console.log(typeof msg, msg)
         msg = this._serialize(...msg);
+        if(msg === null) {
+          return;
+        }
       }
       if (this.config.enable && this.config.colors && !this.config.jsonoutput) {
         var color = 'magenta';
