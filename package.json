@@ -1,6 +1,6 @@
 {
   "name": "wog",
-  "version": "4.0.3",
+  "version": "4.1.0",
   "description": "Just a wittle wogger with no dependencies",
   "main": "index.js",
   "scripts": {
