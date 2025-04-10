@@ -251,10 +251,28 @@ class Wog {
 
 var __wog;
 
-module.exports = function (config) {
+/**
+ * @param {Object} config - Logger configuration
+ * @param {string} [config.level='meme'] - Log level
+ * @param {boolean|string} [config.colors=true] - Enable/disable colors
+ * @param {boolean|string} [config.enable=true] - Enable/disable logging
+ * @param {boolean|string} [config.jsonoutput=false] - Output in JSON format
+ * @param {boolean|string} [config.addTimestamp=true] - Add timestamp to logs
+ * @param {Object} [config.appendFields] - Fields to append to each log
+ * @param {Object} [config.logger=console] - Logger to use
+ * @param {Object} [config.serializers] - Custom serializers
+ * @returns {Wog} - Singleton Wog instance
+ */
+function createWog(config) {
   if (!__wog) {
     __wog = new Wog(config);
   }
 
   return __wog;
-};
+}
+
+// Export both the factory function and the Wog class
+module.exports = createWog;
+module.exports.Wog = Wog;
+
+
