@@ -26,11 +26,11 @@ test();
 
 function test() {
   wog.info('Its ight');
-  wog.warn('Oh noes its a warnning!');
+  wog.warn({warn:'scary'},'Oh noes its a warnning!', "and a string");
   wog.error('Yikes!');
   wog.fatal('f');
   wog.debug('Why?');
-  wog.trace('there you are', {meme:'city'});
+  wog.trace('there you are', {meme:'city'}, {a:1, b:{d:2}, c:3});
   wog.wtf('i give up');
   wog.meme('I summon thee');
 }

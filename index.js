@@ -1,7 +1,7 @@
 const _loadNs = process.hrtime.bigint();
 const _loadMs = BigInt(new Date().getTime()) * 1000n * 1000n;
 
-const colors = require('./src/colors.js');
+const colors = require("./src/colors.js");
 const levels = {
   meme: 0.42,
   trace: 10,
@@ -10,7 +10,7 @@ const levels = {
   warn: 40,
   error: 50,
   fatal: 60,
-  wtf: 70
+  wtf: 70,
 };
 
 class Wog {
@@ -19,37 +19,53 @@ class Wog {
       config = {};
     }
     this.config = {};
-    this.config.level = config.level || 'meme';
-    this.config.colors = this.isSetDefault(this.stringToBool(config.colors), true);
-    this.config.enable = this.isSetDefault(this.stringToBool(config.enable), true);
-    this.config.jsonoutput =  this.isSetDefault(this.stringToBool(config.jsonoutput), false);
-    this.config.addTimestamp = this.isSetDefault(this.stringToBool(config.addTimestamp), true);
-    this._appendFields = '';
-    if(config.appendFields) {
-      if(this.config.jsonoutput ) {
+    this.config.level = config.level || "meme";
+    this.config.colors = this.isSetDefault(
+      this.stringToBool(config.colors),
+      true
+    );
+    this.config.enable = this.isSetDefault(
+      this.stringToBool(config.enable),
+      true
+    );
+    this.config.jsonoutput = this.isSetDefault(
+      this.stringToBool(config.jsonoutput),
+      false
+    );
+    this.config.addTimestamp = this.isSetDefault(
+      this.stringToBool(config.addTimestamp),
+      true
+    );
+    this._appendFields = "";
+    if (config.appendFields) {
+      if (this.config.jsonoutput) {
         try {
-          this._appendFields = JSON.stringify(config.appendFields)
-          this._appendFields = this._appendFields.substring(1, this._appendFields.length-1);
+          this._appendFields = JSON.stringify(config.appendFields);
+          this._appendFields = this._appendFields.substring(
+            1,
+            this._appendFields.length - 1
+          );
           //this._appendFields += ','
         } catch (error) {
-          this._appendFields = ''
+          this._appendFields = "";
         }
       } else {
-       this._appendFields = '[ '
+        this._appendFields = "[ ";
         var keys = Object.keys(config.appendFields);
         for (let i = 0; i < keys.length; i++) {
           const field = keys[i];
-          this._appendFields += `${config.appendFields[field]}` + ((i+1) < keys.length ? ' | ' :'' )
+          this._appendFields +=
+            `${config.appendFields[field]}` +
+            (i + 1 < keys.length ? " | " : "");
         }
-        this._appendFields += ' ]'
+        this._appendFields += " ]";
       }
     }
 
-    this._logger = config.logger || console ;
-    this.level = levels[ this.config.level];
+    this._logger = config.logger || console;
+    this.level = levels[this.config.level];
     this.serializers = config.serializers || {};
     this.serializersKeys = Object.keys(this.serializers);
-    
   }
 
   // hack for fastify support
@@ -68,116 +84,167 @@ class Wog {
   setLogger(logger) {
     this._logger = logger;
   }
-  
-  _serialize(m) {
-   // console.log(this.config.jsonoutput)
-    if (m.stack && m.message) {
 
-     // return `"message": "${m.message}","stack": ${JSON.stringify(m.stack)}`
-      if(!this.config.jsonoutput) { 
-        return [m]
+  _serialize(...msg) {
+    for (let i = 0; i < msg.length; i++) {
+      const m = msg[i];
+
+      if (m.stack && m.message) {
+        // return `"message": "${m.message}","stack": ${JSON.stringify(m.stack)}`
+        if (!this.config.jsonoutput) {
+          msg[i] = m;
+          continue;
+        }
+        msg[i] = JSON.stringify({
+          wog_type: m.name,
+          message: m.message,
+          stack: m.stack,
+          traceId: m.traceId,
+        }).slice(1, -1);
+        continue;
       }
-      return JSON.stringify({wog_type:m.name,message:m.message,stack:m.stack,traceId:m.traceId}).slice(1,-1)
-    }
 
-    if( typeof m == 'string') {
-      if(!this.config.jsonoutput) {
-        return [m];
+      if (typeof m == "string") {
+        if (!this.config.jsonoutput) {
+          msg[i] = m;
+          continue;
+        }
+        if (i === 0 && msg.length === 1) {
+          msg[i] = `"wog_type":"string_message","message":"${m}"`;
+        } else {
+          msg[i] = `"message${i === 0 ? "" : `_${i}`}":"${m}"`;
+        }
+        continue;
       }
-      return `"wog_type":"string_message","message":"${m}"`;
-    }
 
-    if(this.serializersKeys.length) {
-      var t = {};
-      var found = false;
-      for (let i = 0; i < this.serializersKeys.length; i++) {
-        if (m[this.serializersKeys[i]]) {
-          // if(this.config.jsonFlaten) {
-            
-          // }
-          t = Object.assign(t, this.serializers[this.serializersKeys[i]](m[this.serializersKeys[i]]));
-          found = true;
+      if (this.serializersKeys.length) {
+        var t = {};
+        var found = false;
+        for (let j = 0; j < this.serializersKeys.length; j++) {
+          if (m[this.serializersKeys[j]]) {
+            t = Object.assign(
+              t,
+              this.serializers[this.serializersKeys[j]](
+                m[this.serializersKeys[j]]
+              )
+            );
+            found = true;
+          }
+        }
+
+        if (found) {
+          if (!Object.keys(t).length) {
+            msg[i] = null;
+            continue;
+          }
+          if (this.config.jsonoutput) {
+            msg[i] = JSON.stringify(t).slice(1, -1);
+            continue;
+          }
+          msg[i] = t;
+          continue;
         }
       }
-
-      if(found) {
-        if(!Object.keys(t).length) {
-          return null
-        }
-        if(this.config.jsonoutput) {
-          return (JSON.stringify(t)).slice(1,-1);
-        }
-        return [t];
+      if (!this.config.jsonoutput) {
+        msg[i] = m;
+        continue;
       }
-      
-    }
-    if(!this.config.jsonoutput) { 
-      return [m]
-    }
 
-    return (JSON.stringify(m)).slice(1,-1);
-  
+      msg[i] = JSON.stringify(m).slice(1, -1);
+    }
+    return msg;
   }
-  _getTS(){
-    if(!this.config.addTimestamp) {
-      return '';
+  _getTS() {
+    if (!this.config.addTimestamp) {
+      return "";
     }
-    if(!this.config.jsonoutput) {
-      return `[${(_loadMs + (process.hrtime.bigint() - _loadNs)).toString()}]`
+    if (!this.config.jsonoutput) {
+      return `[${(_loadMs + (process.hrtime.bigint() - _loadNs)).toString()}]`;
     }
-    return `"tsNs":"${(_loadMs + (process.hrtime.bigint() - _loadNs)).toString()}",`;
+    return `"tsNs":"${(
+      _loadMs +
+      (process.hrtime.bigint() - _loadNs)
+    ).toString()}",`;
   }
 
   log(level, ...msg) {
-  //console.log(this);
     if (level >= this.level) {
       if (msg[0]) {
-    //    console.log(typeof msg, msg)
         msg = this._serialize(...msg);
-        if(msg === null) {
+
+        if (msg === null) {
           return;
         }
       }
       if (this.config.enable && this.config.colors && !this.config.jsonoutput) {
-        var color = 'magenta';
+        var color = "magenta";
 
         switch (level) {
           case levels.info:
-            color = 'white';
+            color = "white";
             break;
           case levels.warn:
-            color = 'yellow';
+            color = "yellow";
             break;
           case levels.error:
-            color = 'red';
+            color = "red";
             break;
           case levels.debug:
-            color = 'blue';
+            color = "blue";
             break;
           case levels.fatal:
-            color = 'magenta';
+            color = "magenta";
             break;
           case levels.trace:
-            color = 'green';
+            color = "green";
             break;
           case levels.wtf:
-            this._logger.log(this._getTS()+'[' + colors('rainbow', this.getLevelString(level)) + ']:',this._appendFields, ...msg);
+            this._logger.log(
+              this._getTS() +
+                "[" +
+                colors("rainbow", this.getLevelString(level)) +
+                "]:",
+              this._appendFields,
+              ...msg
+            );
             return;
             break;
           case levels.meme:
-            this._logger.log(this._getTS()+'[' + colors('zalgo', this.getLevelString(level)) + ']:',this._appendFields, ...msg);
+            this._logger.log(
+              this._getTS() +
+                "[" +
+                colors("zalgo", this.getLevelString(level)) +
+                "]:",
+              this._appendFields,
+              ...msg
+            );
             return;
             break;
           default:
             break;
         }
-        this._logger.log(this._getTS()+'[' + colors(color, this.getLevelString(level)) + ']:',this._appendFields, ...msg);
+        this._logger.log(
+          this._getTS() +
+            "[" +
+            colors(color, this.getLevelString(level)) +
+            "]:",
+          this._appendFields,
+          ...msg
+        );
       } else if (this.config.enable) {
-          if (this.config.jsonoutput) {
-            this._logger.log(`{${this._getTS()}"level": "${this.getLevelString(level)}",${this._appendFields}, ${msg}}`);
-          } else {
-            this._logger.log(this._getTS()+'[' + this.getLevelString(level) + ']:',this._appendFields, ...msg);
-          }
+        if (this.config.jsonoutput) {
+          this._logger.log(
+            `{${this._getTS()}"level": "${this.getLevelString(level)}",${
+              this._appendFields ? this._appendFields + "," : ""
+            } ${msg}}`
+          );
+        } else {
+          this._logger.log(
+            this._getTS() + "[" + this.getLevelString(level) + "]:",
+            this._appendFields,
+            ...msg
+          );
+        }
       }
     }
   }
@@ -210,39 +277,39 @@ class Wog {
   getLevelString(level) {
     switch (level) {
       case levels.info:
-        return 'INFO';
+        return "INFO";
       case levels.warn:
-        return 'WARN';
+        return "WARN";
       case levels.error:
-        return 'ERROR';
+        return "ERROR";
       case levels.debug:
-        return 'DEBUG';
+        return "DEBUG";
       case levels.fatal:
-        return 'FATAL';
+        return "FATAL";
       case levels.trace:
-        return 'TRACE';
+        return "TRACE";
       case levels.wtf:
-        return 'DAFUC';
+        return "DAFUC";
       case levels.meme:
-        return 'MEME';
+        return "MEME";
       default:
         break;
     }
   }
   stringToBool(bool) {
-    if (typeof bool == 'boolean') {
+    if (typeof bool == "boolean") {
       return bool;
     }
-    if (bool == 'true') {
+    if (bool == "true") {
       return true;
     }
-    if (bool == 'false') {
+    if (bool == "false") {
       return false;
     }
     return null;
   }
   isSetDefault(v, d) {
-    if (typeof v == 'number') {
+    if (typeof v == "number") {
       return !isNaN(v) ? v : d;
     }
     return v !== null && v !== undefined ? v : d;
@@ -274,5 +341,3 @@ function createWog(config) {
 // Export both the factory function and the Wog class
 module.exports = createWog;
 module.exports.Wog = Wog;
-
-
